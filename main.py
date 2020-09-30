@@ -18,6 +18,8 @@ menubar = tk.Menu(root)
 new_icon = tk.PhotoImage(file="icons/new.png")
 open_icon = tk.PhotoImage(file="icons/open.png")
 save_icon = tk.PhotoImage(file="icons/save.png")
+saveAs_icon = tk.PhotoImage(file="icons/save_as.png")
+exit_icon = tk.PhotoImage(file="icons/exit.png")
 
 # file
 file = tk.Menu(menubar, tearoff=0)
@@ -26,6 +28,8 @@ file = tk.Menu(menubar, tearoff=0)
 copy_icon = tk.PhotoImage(file="icons/copy.png")
 paste_icon = tk.PhotoImage(file="icons/paste.png")
 cut_icon = tk.PhotoImage(file="icons/cut.png")
+clearAll_icon = tk.PhotoImage(file="icons/clear_all.png")
+find_icon = tk.PhotoImage(file="icons/find.png")
 
 # edit
 edit = tk.Menu(menubar, tearoff=0)
@@ -58,6 +62,27 @@ color_dict = {
 }
 
 color_icon_list = [Light_Default_icon, Light_Plus_icon, Dark_icon, Monokai_icon, Red_icon, Night_Blue_icon]
+
+# music
+music = tk.Menu(menubar, tearoff=0)
+
+
+# music play function
+def play_music(event=None):
+    mixer.music.load("Subconscious_Mind_Programming_Binaural_Beats.mp3")
+    mixer.music.play()
+
+
+music.add_command(label="Play Music", compound=tk.LEFT, accelerator="Ctrl+P", command=play_music)
+
+
+# music stop functionality
+def stop_music(event=None):
+    mixer.music.stop()
+
+
+music.add_command(label="Stop", compound=tk.LEFT, accelerator="Ctrl+W", command=stop_music)
+
 # cascade
 menubar.add_cascade(label="File", menu=file)
 menubar.add_cascade(label="Edit", menu=edit)
@@ -338,7 +363,124 @@ def save_file(event=None):
 file.add_separator()
 file.add_command(label="Save", image=save_icon, compound=tk.LEFT, accelerator="Ctrl+S", command=save_file)
 
+
+# save as functionality
+def save_as(
+
+         event=None):
+    global url
+    try:
+        url = filedialog.asksaveasfile(mode='w', defaultextension='.txt',
+                                       filetypes=(("Text File", "*.txt"), ("All Files", "*.*")))
+        content2 = text_editor.get(1.0, tk.END)
+        url.write(content2)
+        url.close()
+    except:
+        return
+
+
+file.add_command(label="Save As", image=saveAs_icon, compound=tk.LEFT, accelerator="Ctrl+Alt+S", command=save_as)
+
+
+# exit funcitonality
+def exit(event=None):
+    global url, text_changed
+    try:
+        if text_changed is True:
+            mbox = messagebox.askyesnocancel("Warning", "Do you want to save the file?")
+            if mbox is True:
+                if url is True:
+                    content = str(text_editor.get(1.0, tk.END))
+                    with open(url, 'w', encoding="utf-8") as fw:
+                        fw.write(content)
+                    root.destroy()
+
+                else:
+                    url = filedialog.asksaveasfile(mode='w', defaultextension='.txt',
+                                                   filetypes=(("Text File", "*.txt"), ("All Files", "*.*")))
+                    content2 = text_editor.get(1.0, tk.END)
+                    url.write(content2)
+                    url.close()
+                    root.destroy()
+            elif mbox is False:
+                root.destroy()
+        else:
+            root.destroy()
+    except:
+        return
+
+
+file.add_separator()
+file.add_command(label="Exit", image=exit_icon, compound=tk.LEFT, accelerator="Ctrl+Q", command=exit)
+
+
 # edit commands
+
+
+# find functionality
+def find_func(event=None):
+    def find():
+        word = find_entry.get()
+        text_editor.tag_remove('match', 1.0, tk.END)
+        matches = 0
+        if word:
+            start_pos = '1.0'
+            while True:
+                start_pos = text_editor.search(word, start_pos, stopindex=tk.END)
+                if not start_pos:
+                    break
+                end_pos = f"{start_pos}+{len(word)}c"
+                text_editor.tag_add("match", start_pos, end_pos)
+                matches += 1
+                start_pos = end_pos
+                text_editor.tag_config("match", foreground="red", background="yellow")
+
+    def replace():
+        word = find_entry.get()
+        replace_txt = replace_entry.get()
+        content = text_editor.get(1.0, tk.END)
+        new_content = content.replace(word, replace_txt)
+        text_editor.delete(1.0, tk.END)
+        text_editor.insert(1.0, new_content)
+
+    find_dialog = tk.Toplevel()
+    find_dialog.geometry("450x250+500+200")
+    find_dialog.title("Find")
+    find_dialog.resizable(0, 0)
+
+    # frame
+    frame = ttk.LabelFrame(find_dialog, text="Find/Replace")
+    frame.pack(pady=20)
+
+    # labels
+    find_label = ttk.Label(frame, text="Find : ")
+    replace_label = ttk.Label(frame, text="Replace : ")
+
+    # entry
+    find_entry = ttk.Entry(frame, width=30)
+    replace_entry = ttk.Entry(frame, width=30)
+
+    # buttons
+    find_btn = ttk.Button(frame, text="Find", command=find)
+    replace_btn = ttk.Button(frame, text="Replace", command=replace)
+
+    # labels grid
+    find_label.grid(row=0, column=0, padx=4, pady=4)
+    replace_label.grid(row=1, column=0, padx=4, pady=4)
+
+    # entry grid
+    find_entry.grid(row=0, column=1, padx=4, pady=4)
+    replace_entry.grid(row=1, column=1, padx=4, pady=4)
+
+    # buttons grid
+    find_btn.grid(row=2, column=0, padx=8, pady=4)
+    replace_btn.grid(row=2, column=1, padx=8, pady=4)
+
+    find_entry.focus()
+
+    find_dialog.mainloop()
+
+
 edit.add_command(label="Copy", image=copy_icon, compound=tk.LEFT, accelerator="Ctrl+C",
                  command=lambda: text_editor.event_generate("<Control c>"))
 edit.add_command(label="Paste", image=paste_icon, compound=tk.LEFT, accelerator="Ctrl+V",
